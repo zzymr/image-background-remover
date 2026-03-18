@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 
 interface ImageUploaderProps {
-  onImageSelect: (file: File) => void
+  onImageSelect: (state: { file: File | null; preview: string | null }) => void
 }
 
 export default function ImageUploader({ onImageSelect }: ImageUploaderProps) {
@@ -15,7 +15,7 @@ export default function ImageUploader({ onImageSelect }: ImageUploaderProps) {
     if (file) {
       const previewUrl = URL.createObjectURL(file)
       setPreview(previewUrl)
-      onImageSelect(file)
+      onImageSelect({ file, preview: previewUrl })
     }
   }, [onImageSelect])
 

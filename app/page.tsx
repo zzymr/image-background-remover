@@ -8,14 +8,22 @@ export default function Home() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [processedImage, setProcessedImage] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleImageSelect = (file: File) => {
-    setSelectedImage(file)
+  const handleImageSelect = (state: { file: File | null; preview: string | null }) => {
+    setSelectedImage(state.file)
     setProcessedImage(null)
+    setError(null)
   }
 
   const handleProcessComplete = (result: string) => {
     setProcessedImage(result)
+    setIsProcessing(false)
+    setError(null)
+  }
+
+  const handleError = (errorMessage: string) => {
+    setError(errorMessage)
     setIsProcessing(false)
   }
 
@@ -23,6 +31,7 @@ export default function Home() {
     setSelectedImage(null)
     setProcessedImage(null)
     setIsProcessing(false)
+    setError(null)
   }
 
   return (
@@ -38,6 +47,26 @@ export default function Home() {
           </p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <p className="text-red-700">{error}</p>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="mt-2 text-sm text-red-600 hover:text-red-800"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
         {!selectedImage && (
           <ImageUploader onImageSelect={handleImageSelect} />
@@ -46,19 +75,15 @@ export default function Home() {
         {selectedImage && !processedImage && !isProcessing && (
           <ProcessingResult
             image={selectedImage}
-            onProcess={(image) => {
+            onProcess={() => {
               setIsProcessing(true)
-              // TODO: Implement actual background removal
-              setTimeout(() => {
-                // For now, just use the original image
-                handleProcessComplete(URL.createObjectURL(image))
-              }, 2000)
+              setError(null)
             }}
             onReset={handleReset}
           />
         )}
 
-        {isProcessing && (
+        {isProcessing && selectedImage && (
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-white rounded-2xl shadow-xl p-12">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
