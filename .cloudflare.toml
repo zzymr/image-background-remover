@@ -1,0 +1,30 @@
+# Cloudflare Pages 配置文件
+# https://developers.cloudflare.com/pages/configuration
+
+# 构建命令
+[build]
+command = "npm run build"
+
+# 构建输出目录
+[build.environment]
+NODE_VERSION = "18"
+
+# 环境变量（需要在 Cloudflare Dashboard 中设置）
+# [vars]
+# REMOVEBG_API_KEY = ""
+
+# 重定向和路由规则
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/:splat"
+status = 200
+
+# 头部设置
+[[headers]]
+for = "/*"
+[headers]\
+values = [
+  "X-Frame-Options = DENY",
+  "X-Content-Type-Options = nosniff",
+  "Referrer-Policy = strict-origin-when-cross-origin"
+]
