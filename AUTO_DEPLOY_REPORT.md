@@ -53,7 +53,7 @@ Build settings:
 
 | Variable | Value | Environments |
 |----------|-------|-------------|
-| `REMOVEBG_API_KEY` | `KSCdv2AtnnaoSdUYEaN6wudp` | Production, Preview |
+| `REMOVEBG_API_KEY` | `<your_removebg_api_key>` | Production, Preview |
 
 #### 步骤 6: 部署
 点击 **Save and Deploy**
@@ -182,7 +182,7 @@ Build command: npm run build
 Build output: .next
 
 # 5. 设置环境变量
-REMOVEBG_API_KEY = KSCdv2AtnnaoSdUYEaN6wudp
+REMOVEBG_API_KEY = <your_removebg_api_key>
 
 # 6. 部署
 点击 Save and Deploy

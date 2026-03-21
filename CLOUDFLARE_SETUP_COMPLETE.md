@@ -53,7 +53,7 @@
 5. **设置环境变量**
    ```
    Variable: REMOVEBG_API_KEY
-   Value: KSCdv2AtnnaoSdUYEaN6wudp
+   Value: <your_removebg_api_key>
    Environments: Production, Preview
    ```
 
@@ -73,8 +73,8 @@
 
 ### Cloudflare 凭证
 ```
-API Token: cfat_72QqRNLQVi3DwyB8IE8ffwChfi17I6Mjw48IbdnP99dd2d75
-Account ID: 1fb8a978707359a5a4e3aba59e57ba01
+API Token: <your_cloudflare_api_token>
+Account ID: <your_cloudflare_account_id>
 ```
 
 ### 项目信息
@@ -86,7 +86,7 @@ GitHub 仓库: zzymr/image-background-remover
 
 ### 环境变量
 ```
-REMOVEBG_API_KEY = KSCdv2AtnnaoSdUYEaN6wudp
+REMOVEBG_API_KEY = <your_removebg_api_key>
 ```
 
 ### 构建配置
@@ -277,7 +277,7 @@ git push origin master
    Build output: .next
 
 5. **设置环境变量**
-   REMOVEBG_API_KEY = KSCdv2AtnnaoSdUYEaN6wudp
+   REMOVEBG_API_KEY = <your_removebg_api_key>
 
 6. **部署**
 **点击 Save and Deploy**

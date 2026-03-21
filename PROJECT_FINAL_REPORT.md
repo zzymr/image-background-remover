@@ -28,8 +28,8 @@
 
 ### Cloudflare 配置
 ```
-API Token: cfat_72QqRNLQVi3DwyB8IE8ffwChfi17I6Mjw48IbdnP99dd2d75
-Account ID: 1fb8a978707359a5a4e3aba59e57ba01
+API Token: <your_cloudflare_api_token>
+Account ID: <your_cloudflare_account_id>
 Account Email: Zhangzhou830@gmail.com
 ```
 
@@ -43,7 +43,7 @@ GitHub 仓库: zzymr/image-background-remover
 
 ### API 配置
 ```
-Remove.bg API Key: KSCdv2AtnnaoSdUYEaN6wudp
+Remove.bg API Key: <your_removebg_api_key>
 免费额度: 50 次/月
 重置时间: 每月 1 日
 ```
@@ -76,7 +76,7 @@ Runtime: Edge Runtime
    - Build command: npm run build
    - Build output: .next
 5. 设置环境变量：
-   - REMOVEBG_API_KEY = KSCdv2AtnnaoSdUYEaN6wudp
+   - REMOVEBG_API_KEY = <your_removebg_api_key>
 6. 点击 Save and Deploy
 7. 访问：https://image-background-remover.pages.dev
 
@@ -94,7 +94,7 @@ Runtime: Edge Runtime
 **步骤：**
 ```bash
 # 1. 登录（已完成）
-export CLOUDFLARE_API_TOKEN="cfat_72QqRNLQVi3DwyB8IE8ffwChfi17I6Mjw48IbdnP99dd2d75"
+export CLOUDFLARE_API_TOKEN="<your_cloudflare_api_token>"
 wrangler login
 
 # 2. 创建项目（在 Dashboard 中创建）
@@ -106,7 +106,7 @@ npm run build
 wrangler pages deploy .next --project-name=image-background-remover
 
 # 4. 设置环境变量
-echo "KSCdv2AtnnaoSdUYEaN6wudp" | \
+echo "<your_removebg_api_key>" | \
   wrangler pages secret put REMOVEBG_API_KEY \
   --project-name=image-background-remover \
   --environment=production
@@ -313,7 +313,7 @@ Build command: npm run build
 Build output: .next
 
 # 5. 设置环境变量
-REMOVEBG_API_KEY = KSCdv2AtnnaoSdUYEaN6wudp
+REMOVEBG_API_KEY = <your_removebg_api_key>
 
 # 6. 部署
 点击 Save and Deploy

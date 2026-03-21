@@ -3,9 +3,9 @@
 ## 📋 准备工作
 
 ### 已配置的凭证
-- **Cloudflare API Token:** `cfat_72QqRNLQVi3DwyB8IE8ffwChfi17I6Mjw48IbdnP99dd2d75`
-- **Cloudflare Account ID:** `1fb8a978707359a5a4e3aba59e57ba01`
-- **Remove.bg API Key:** `KSCdv2AtnnaoSdUYEaN6wudp`
+- **Cloudflare API Token:** `<your_cloudflare_api_token>`
+- **Cloudflare Account ID:** `<your_cloudflare_account_id>`
+- **Remove.bg API Key:** `<your_removebg_api_key>`
 
 `Project Name:** `image-background-remover`
 
@@ -48,7 +48,7 @@ Build settings:
 
 | Variable | Value | Environment |
 |----------|-------|-------------|
-| `REMOVEBG_API_KEY` | `KSCdv2AtnnaoSdUYEaN6wudp` | Production, Preview |
+| `REMOVEBG_API_KEY` | `<your_removebg_api_key>` | Production, Preview |
 
 ### 步骤 5: 部署
 
@@ -71,7 +71,7 @@ npm install -g wrangler
 创建或编辑 `~/.wrangler/config/default.toml`：
 
 ```toml
-api_token = "cfat_72QqRNLQVi3DwyB8IE8ffwChfi17I6Mjw48IbdnP99dd2d75"
+api_token = "<your_cloudflare_api_token>"
 ```
 
 ### 步骤 3: 登录 Cloudflare
@@ -83,7 +83,7 @@ wrangler login
 或在配置文件中使用 API Token：
 
 ```bash
-export CLOUDFLARE_API_TOKEN="cfat_72QqRNLQVi3DwyB8IE8ffwChfi17I6Mjw48IbdnP99dd2d75"
+export CLOUDFLARE_API_TOKEN="<your_cloudflare_api_token>"
 ```
 
 ### 步骤 4: 创建 Pages 项目
@@ -115,7 +115,7 @@ wrangler pages secret put REMOVEBG_API_KEY \
   --project-name=image-background-remover \
   --environment=production
 
-# 输入：KSCdv2AtnnaoSdUYEaN6wudp
+# 输入：<your_removebg_api_key>
 ```
 
 ---

@@ -2,7 +2,7 @@
 
 ## ✅ API Key 已配置
 
-**Remove.bg API Key:** `KSCdv2AtnnaoSdUYEaN6wudp`
+**Remove.bg API Key:** `<your_removebg_api_key>`
 **状态:** 已成功配置到 `.env.local` 文件
 
 ---
@@ -85,7 +85,7 @@ wrangler pages deploy .env
 ### 步骤 4: 设置环境变量
 在 Cloudflare Dashboard 设置：
 - 变量名：`REMOVEBG_API_KEY`
-- 值：`KSCdv2AtnnaoSdUYEaN6wudp`
+- 值：`<your_removebg_api_key>`
 
 ---
 
@@ -93,7 +93,7 @@ wrangler pages deploy .env
 
 **免费额度：** 50 次/月
 **重置时间：** 每月 1 日
-**当前 API Key：** `KSCdv2AtnnaoSdUYEaN6wudp`
+**当前 API Key：** `<your_removebg_api_key>`
 
 ### 查看使用情况
 访问：https://www.remove.bg/dashboard

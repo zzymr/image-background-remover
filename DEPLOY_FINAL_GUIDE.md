@@ -10,7 +10,7 @@
 
 ### 配置信息
 ```
-Cloudflare Account ID: 1fb8a978707359a5a4e3aba59e57ba01
+Cloudflare Account ID: <your_cloudflare_account_id>
 GitHub 仓库: zzymr/image-background-remover
 默认分支: master
 ```
@@ -61,7 +61,7 @@ Root directory: (留空或填 /)
 
 | Variable | Value | Environments |
 |----------|-------|-------------|
-| `REMOVEBG_API_KEY` | `KSCdv2AtnnaoSdUYEaN6wudp` | Production, Preview |
+| `REMOVEBG_API_KEY` | `<your_removebg_api_key>` | Production, Preview |
 
 ### 步骤 5: 部署项目
 
@@ -218,7 +218,7 @@ Cloudflare 会自动添加 CNAME 记录：
 3. 删除旧的 `REMOVEBG_API_KEY`
 4. 重新添加，确保值完全正确：
    ```
-   KSCdv2AtnnaoSdUYEaN6wudp
+   <your_removebg_api_key>
    ```
 5. 重新部署项目
 
@@ -390,7 +390,7 @@ Cloudflare 会自动添加 CNAME 记录：
    - Build command: npm run build
    - Build output: .next
 5. 设置环境变量:
-   - REMOVEBG_API_KEY = KSCdv2AtnnaoSdUYEaN6wudp
+   - REMOVEBG_API_KEY = <your_removebg_api_key>
 6. 点击 Save and Deploy
 7. 访问: https://image-background-remover.pages.dev
 ```

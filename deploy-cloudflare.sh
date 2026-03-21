@@ -1,74 +1,60 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Cloudflare Pages 自动部署脚本
-# 使用 Cloudflare API Token 和 Account ID
+# Direct upload fallback for Cloudflare Pages.
+# For native GitHub integration, use ./deploy-api.sh.
 
-set -e
+set -euo pipefail
 
-# 配置变量
-CLOUDFLARE_API_TOKEN="cfat_72QqRNLQVi3DwyB8IE8ffwChfi17I6Mjw48IbdnP99dd2d75"
-CLOUDFLARE_ACCOUNT_ID="1fb8a978707359a5a4e3aba59e57ba01"
-PROJECT_NAME="image-background-remover"
-REPO_URL="https://github.com/zzymr/image-background-remover.git"
-REMOVEBG_API_KEY="KSCdv2AtnnaoSdUYEaN6wudp"
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_NAME="${PROJECT_NAME:-image-background-remover}"
+BRANCH="${BRANCH:-master}"
 
-echo "🚀 Cloudflare Pages 自动部署脚本"
-echo "=================================="
-echo ""
+load_env_file() {
+  local file="$1"
+  if [[ -f "$file" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$file"
+    set +a
+  fi
+}
 
-# 检查 wrangler 是否安装
-if ! command -v wrangler &> /dev/null; then
-    echo "⚠️  Wrangler 未安装，正在安装..."
-    npm install -g wrangler
-fi
+load_env_file "$ROOT_DIR/.env.cloudflare.local"
+load_env_file "$ROOT_DIR/.env.local"
 
-echo "✅ Wrangler 已安装"
-echo ""
+: "${CLOUDFLARE_API_TOKEN:?Missing CLOUDFLARE_API_TOKEN. Put it in .env.cloudflare.local or export it first.}"
+: "${CLOUDFLARE_ACCOUNT_ID:?Missing CLOUDFLARE_ACCOUNT_ID. Put it in .env.cloudflare.local or export it first.}"
+: "${REMOVEBG_API_KEY:?Missing REMOVEBG_API_KEY. Put it in .env.local or export it first.}"
 
-# 设置 API Token
-export CLOUDFLARE_API_TOKEN=$CLOUDFLARE_API_TOKEN
-export CLOUDFLARE_ACCOUNT_ID=$CLOUDFLARE_ACCOUNT_ID
+export CLOUDFLARE_API_TOKEN
+export CLOUDFLARE_ACCOUNT_ID
 
-echo "📝 项目信息:"
-echo "  - 项目名称: $PROJECT_NAME"
-echo "  - 仓库: $REPO_URL"
-echo "  - Account ID: $CLOUDFLARE_ACCOUNT_ID"
-echo ""
+echo "🚀 Cloudflare Pages direct upload"
+echo "   Project: $PROJECT_NAME"
+echo "   Branch:  $BRANCH"
+echo
 
-# 进入项目目录
-cd /root/.openclaw/workspace-coder/image-background-remover
+cd "$ROOT_DIR"
 
-echo "📦 安装依赖..."
+echo "📦 Installing dependencies"
 npm install
-echo ""
 
-echo "🔨 构建项目..."
-npm run build
-echo ""
+echo
 
-echo "🚀 部署到 Cloudflare Pages..."
-wrangler pages deploy .next \
-    --project-name=$PROJECT_NAME \
-    --branch=master \
-    --commit-dirty=true
-echo ""
+echo "🔨 Building with next-on-pages"
+npm run pages:build
 
-echo "🔐 设置环境变量..."
-echo "  设置 REMOVEBG_API_KEY..."
-wrangler pages secret put REMOVEBG_API_KEY \
-    --project-name=$PROJECT_NAME \
-    --environment=production << EOF
-$REMOVEBG_API_KEY
-EOF
+echo
 
-echo ""
-echo "✅ 部署完成！"
-echo ""
-echo "📱 访问地址:"
-echo "  - 预览: https://$PROJECT_NAME.pages.dev"
-echo ""
-echo "🔧 下一步:"
-echo "  1. 访问 Cloudflare Dashboard"
-echo "  2. 验证环境变量已设置"
-echo "  3. 测试应用功能"
-echo ""
+echo "🔐 Updating Pages secret"
+printf '%s' "$REMOVEBG_API_KEY" | wrangler pages secret put REMOVEBG_API_KEY --project-name="$PROJECT_NAME"
+
+echo
+
+echo "🚀 Uploading build output"
+wrangler pages deploy .vercel/output/static --project-name="$PROJECT_NAME" --branch="$BRANCH" --commit-dirty=true
+
+echo
+
+echo "✅ Done"
+echo "   Project URL: https://$PROJECT_NAME.pages.dev"

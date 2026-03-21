@@ -1,143 +1,152 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Cloudflare Pages API 部署脚本
-# 直接使用 Cloudflare API 进行部署
+# Configure Cloudflare Pages native GitHub integration via API.
+# Secrets are loaded from local ignored env files instead of being committed.
 
-set -e
+set -euo pipefail
 
-# 配置变量
-CLOUDFLARE_API_TOKEN="cfat_72QqRNLQVi3DwyB8IE8ffwChfi17I6Mjw48IbdnP99dd2d75"
-CLOUDFLARE_ACCOUNT_ID="1fb8a978707359a5a4e3aba59e57ba01"
-PROJECT_NAME="image-background-remover"
-REPO_OWNER="zzymr"
-REPO_NAME="image-background-remover"
-REMOVEBG_API_KEY="KSCdv2AtnnaoSdUYEaN6wudp"
-
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_NAME="${PROJECT_NAME:-image-background-remover}"
+REPO_OWNER="${REPO_OWNER:-zzymr}"
+REPO_NAME="${REPO_NAME:-image-background-remover}"
+PRODUCTION_BRANCH="${PRODUCTION_BRANCH:-master}"
+CF_COMPATIBILITY_DATE="${CF_COMPATIBILITY_DATE:-2026-03-21}"
+NODE_VERSION="${NODE_VERSION:-18}"
 API_BASE="https://api.cloudflare.com/client/v4"
 
-echo "🚀 Cloudflare Pages API 部署"
-echo "================================"
-echo ""
-
-# API 辅助函数
-cloudflare_api() {
-    local method=$1
-    local endpoint=$2
-    local data=$3
-    
-    if [ -n "$data" ]; then
-        curl -s -X "$method" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$data" \
-            "$API_BASE$endpoint"
-    else
-        curl -s -X "$method" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            -H "Content-Type: application/json" \
-            "$API_BASE$endpoint"
-    fi
+load_env_file() {
+  local file="$1"
+  if [[ -f "$file" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$file"
+    set +a
+  fi
 }
 
-echo "📝 配置信息:"
-echo "  - Account: $CLOUDFLARE_ACCOUNT_ID"
-echo "  - Project: $PROJECT_NAME"
-echo "  - Repo: $REPO_OWNER/$REPO_NAME"
-echo ""
+load_env_file "$ROOT_DIR/.env.cloudflare.local"
+load_env_file "$ROOT_DIR/.env.local"
 
-# 步骤 1: 获取现有项目
-echo "🔍 检查现有项目..."
-GET_PROJECTS_RESPONSE=$(cloudflare_api "GET" "/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects")
+: "${CLOUDFLARE_API_TOKEN:?Missing CLOUDFLARE_API_TOKEN. Put it in .env.cloudflare.local or export it first.}"
+: "${CLOUDFLARE_ACCOUNT_ID:?Missing CLOUDFLARE_ACCOUNT_ID. Put it in .env.cloudflare.local or export it first.}"
+: "${REMOVEBG_API_KEY:?Missing REMOVEBG_API_KEY. Put it in .env.local or export it first.}"
 
-PROJECT_EXISTS=$(echo "$GET_PROJECTS_RESPONSE" | grep -o "\"name\":\"$PROJECT_NAME\"" | wc -l)
+cloudflare_api() {
+  local method="$1"
+  local endpoint="$2"
+  local data="${3:-}"
 
-if [ "$PROJECT_EXISTS" -eq 0 ]; then
-    echo "ℹ️  项目不存在，需要手动创建"
-    echo ""
-    echo "📋 请在 Cloudflare Dashboard 创建项目："
-    echo "  1. 访问: https://dash.cloudflare.com"
-    echo "  2. 进入 Workers & Pages"
-    echo "  3. Create a project → Connect to Git"
-    echo "  4. 选择仓库: $REPO_OWNER/$REPO_NAME"
-    echo "  5. Project name: $PROJECT_NAME"
-    echo "  6. Build command: npm run build"
-    echo "  7. Build output directory: .next"
-    echo "  8. Save and Deploy"
-    echo ""
-    echo "创建完成后，运行此脚本设置环境变量"
-    exit 0
+  if [[ -n "$data" ]]; then
+    curl -fsS -X "$method" \
+      -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$data" \
+      "$API_BASE$endpoint"
+  else
+    curl -fsS -X "$method" \
+      -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+      -H "Content-Type: application/json" \
+      "$API_BASE$endpoint"
+  fi
+}
+
+echo "🚀 Configuring Cloudflare Pages native GitHub integration"
+echo "   Project: $PROJECT_NAME"
+echo "   Repo: $REPO_OWNER/$REPO_NAME"
+echo "   Branch: $PRODUCTION_BRANCH"
+echo
+
+GITHUB_REPO_JSON="$(curl -fsS "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME")"
+REPO_ID="$(node -p "JSON.parse(process.argv[1]).id" "$GITHUB_REPO_JSON")"
+OWNER_ID="$(node -p "JSON.parse(process.argv[1]).owner.id" "$GITHUB_REPO_JSON")"
+
+echo "🔍 Resolved GitHub repository metadata"
+echo "   owner_id: $OWNER_ID"
+echo "   repo_id:  $REPO_ID"
+echo
+
+if cloudflare_api "GET" "/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_NAME" >/dev/null 2>&1; then
+  echo "ℹ️  Pages project already exists"
 else
-    echo "✅ 项目已存在"
+  echo "➕ Creating Pages project with GitHub source"
+  CREATE_PAYLOAD="$(cat <<JSON
+{
+  \"name\": \"$PROJECT_NAME\",
+  \"production_branch\": \"$PRODUCTION_BRANCH\",
+  \"source\": {
+    \"type\": \"github\",
+    \"config\": {
+      \"owner\": \"$REPO_OWNER\",
+      \"owner_id\": \"$OWNER_ID\",
+      \"repo_name\": \"$REPO_NAME\",
+      \"repo_id\": \"$REPO_ID\",
+      \"production_branch\": \"$PRODUCTION_BRANCH\",
+      \"deployments_enabled\": true,
+      \"production_deployments_enabled\": true,
+      \"preview_deployment_setting\": \"all\",
+      \"pr_comments_enabled\": true
+    }
+  }
+}
+JSON
+)"
+  cloudflare_api "POST" "/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects" "$CREATE_PAYLOAD" >/dev/null
+  echo "✅ Pages project created"
 fi
 
-echo ""
+echo
 
-# 步骤 2: 获取项目 ID
-echo "🔍 获取项目 ID..."
-PROJECT_ID=$(echo "$GET_PROJECTS_RESPONSE" | grep -o "\"name\":\"$PROJECT_NAME\",\"id\":\"[^\"]*\"" | grep -o "\"id\":\"[^\"]*\"" | cut -d'"' -f4)
+echo "⚙️  Applying build settings, env vars, and compatibility flags"
+PATCH_PAYLOAD="$(cat <<JSON
+{
+  \"build_config\": {
+    \"build_command\": \"npx @cloudflare/next-on-pages@1\",
+    \"destination_dir\": \".vercel/output/static\",
+    \"root_dir\": \"/\",
+    \"build_caching\": true
+  },
+  \"deployment_configs\": {
+    \"preview\": {
+      \"compatibility_date\": \"$CF_COMPATIBILITY_DATE\",
+      \"compatibility_flags\": [\"nodejs_compat\"],
+      \"env_vars\": {
+        \"NODE_VERSION\": { \"type\": \"plain_text\", \"value\": \"$NODE_VERSION\" },
+        \"REMOVEBG_API_KEY\": { \"type\": \"secret_text\", \"value\": \"$REMOVEBG_API_KEY\" }
+      }
+    },
+    \"production\": {
+      \"compatibility_date\": \"$CF_COMPATIBILITY_DATE\",
+      \"compatibility_flags\": [\"nodejs_compat\"],
+      \"env_vars\": {
+        \"NODE_VERSION\": { \"type\": \"plain_text\", \"value\": \"$NODE_VERSION\" },
+        \"REMOVEBG_API_KEY\": { \"type\": \"secret_text\", \"value\": \"$REMOVEBG_API_KEY\" }
+      }
+    }
+  }
+}
+JSON
+)"
+cloudflare_api "PATCH" "/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_NAME" "$PATCH_PAYLOAD" >/dev/null
 
-if [ -z "$PROJECT_ID" ]; then
-    echo "❌ 无法获取项目 ID"
-    exit 1
+echo "✅ Project settings updated"
+echo
+
+echo "🚀 Triggering deployment"
+DEPLOY_JSON="$(cloudflare_api "POST" "/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_NAME/deployments")"
+DEPLOY_ID="$(node -p "JSON.parse(process.argv[1]).result.id" "$DEPLOY_JSON")"
+DEPLOY_URL="$(node -p "JSON.parse(process.argv[1]).result.url || ''" "$DEPLOY_JSON")"
+
+echo "✅ Deployment triggered"
+echo "   deployment_id: $DEPLOY_ID"
+if [[ -n "$DEPLOY_URL" ]]; then
+  echo "   deployment_url: $DEPLOY_URL"
 fi
 
-echo "✅ 项目 ID: $PROJECT_ID"
-echo ""
+echo
 
-# 步骤 3: 设置环境变量
-echo "🔐 设置环境变量..."
-
-# 检查环境变量是否已存在
-GET_ENV_VARS_RESPONSE=$(cloudflare_api "GET" "/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_ID/env_vars/production")
-
-ENV_EXISTS=$(echo "$GET_ENV_VARS_RESPONSE" | grep -o "\"name\":\"REMOVEBG_API_KEY\"" | wc -l)
-
-if [ "$ENV_EXISTS" -eq 1 ]; then
-    echo "ℹ️  环境变量已存在，更新中..."
-    # 先删除旧的
-    cloudflare_api "DELETE" "/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_ID/env_vars/production/REMOVEBG_API_KEY" > /dev/null
-fi
-
-# 创建新的环境变量
-SET_ENV_RESPONSE=$(cloudflare_api "POST" "/accounts\
-/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_ID/env_vars/production" \
-    "{\"name\":\"REMOVEBG_API_KEY\",\"value\":\"$REMOVEBG_API_KEY\"}")
-
-if echo "$SET" | grep -q "success"; then
-    echo "✅ 环境变量设置成功"
-else
-    echo "⚠️  环境变量设置可能失败，请检查 Dashboard"
-fi
-
-echo ""
-
-# 步骤 4: 触发部署
-echo "🚀 触发部署..."
-DEPLOY_RESPONSE=$(cloudflare_api "POST" "/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT_ID/deployments")
-
-if echo "$DEPLOY_RESPONSE" | grep -q "success"; then
-    echo "✅ 部署触发成功"
-    
-    # 获取部署 URL
-    DEPLOY_URL=$(echo "$DEPLOY_RESPONSE" | grep -o "\"url\":\"[^\"]*\"" | head -1 | cut -d'"' -f4)
-    if [ -n "$DEPLOY_URL" ]; then
-        echo "📱 部署 URL: $DEPLOY_URL"
-    fi
-else
-    echo "⚠️  部署触发可能失败"
-fi
-
-echo ""
-echo "✅ 配置完成！"
-echo ""
-echo "📋 下一步:"
-echo "  1. 访问 Cloudflare Dashboard"
-echo "  2. 验证环境变量: REMOVEBG_API_KEY = $REMOVEBG_API_KEY"
-echo "  3. 检查部署状态"
-echo "  4. 访问应用: https://$PROJECT_NAME.pages.dev"
-echo ""
-echo "🔧 管理控制台:"
-echo "  - Dashboard: https://dash.cloudflare.com\
-"
-echo "  - 项目: https://dash.cloudflare.com/$CLOUDFLARE_ACCOUNT_ID/pages/view/$PROJECT_NAME"
-echo ""
+echo "📋 Summary"
+echo "   Pages project: https://dash.cloudflare.com/$CLOUDFLARE_ACCOUNT_ID/workers-and-pages/view/$PROJECT_NAME"
+echo "   Production URL: https://$PROJECT_NAME.pages.dev"
+echo "   Build command: npx @cloudflare/next-on-pages@1"
+echo "   Output dir: .vercel/output/static"
+echo "   Compatibility flag: nodejs_compat"
