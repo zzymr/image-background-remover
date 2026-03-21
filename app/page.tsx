@@ -3,7 +3,8 @@
 import { useState, useRef } from 'react'
 import ImageUploader from '@/components/ImageUploader'
 import ProcessingResult from '@/components/ProcessingResult'
-import { Upload, Download, RefreshCw, AlertCircle } from 'lucide-react'
+import BeforeAfterCompare from '@/components/BeforeAfterCompare'
+import { Download, RefreshCw, AlertCircle, Sparkles } from 'lucide-react'
 
 export default function Home() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
@@ -19,8 +20,7 @@ export default function Home() {
     setProcessedImage(null)
     setError(null)
     setProgress(0)
-    
-    // 创建预览 URL
+
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl)
     }
@@ -34,22 +34,21 @@ export default function Home() {
     setError(null)
     setProgress(0)
 
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(progressInterval)
+          return 90
+        }
+        return prev + 10
+      })
+    }, 450)
+
     try {
       const formData = new FormData()
       formData.append('image', selectedImage)
 
-      // 模拟进度
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval)
-            return 90
-          }
-          return prev + 10
-        })
-      }, 500)
-
-      const response = await fetch('/api/remove/remove', {
+      const response = await fetch('/api/remove-bg', {
         method: 'POST',
         body: formData,
       })
@@ -57,28 +56,28 @@ export default function Home() {
       clearInterval(progressInterval)
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to remove background')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(
+          (errorData as { error?: string }).error || '抠图失败，请重试'
+        )
       }
 
       setProgress(100)
 
-      // 获取处理后的图片
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
-      
-      // 清理之前的处理结果
+
       if (processedImageRef.current) {
         URL.revokeObjectURL(processedImageRef.current)
       }
-      
+
       processedImageRef.current = url
       setProcessedImage(url)
-
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : '发生错误')
       setProcessedImage(null)
     } finally {
+      clearInterval(progressInterval)
       setIsProcessing(false)
     }
   }
@@ -111,206 +110,153 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
-      <div className="container mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl mb-6 shadow-lg">
-            <Upload className="w-8 h-8 text-white" />
+    <main className="relative min-h-screen overflow-hidden bg-stone-100 text-stone-900">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_100%_60%_at_50%_-15%,rgb(45_212_191/0.12),transparent_55%)]"
+        aria-hidden
+      />
+      <div className="relative mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
+        <header className="mb-10 text-center sm:mb-14">
+          <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-800 text-white shadow-md ring-4 ring-teal-800/15">
+            <Sparkles className="h-6 w-6" strokeWidth={1.75} />
           </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
-            Background Remover
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl">
+            背景消除
           </h1>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Remove image backgrounds instantly with AI. Upload an image and get a transparent background in seconds.
+          <p className="mx-auto mt-3 max-w-md text-pretty text-sm leading-relaxed text-stone-600 sm:text-base">
+            上传图片，AI 移除背景。完成后可用滑块或并排模式对比清除前与清除后。
           </p>
-        </div>
+        </header>
 
-        {/* Main Content */}
-        {!selectedImage && (
-          <div className="max-w-2xl mx-auto">
-            <ImageUploader onImageSelect={handleImageSelect} />
+        {error && (
+          <div
+            className="mb-8 flex items-start gap-3 rounded-2xl border border-red-200/80 bg-red-50/90 p-4 shadow-sm"
+            role="alert"
+          >
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-red-900">出错了</p>
+              <p className="mt-1 text-sm text-red-800/90">{error}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100/80"
+            >
+              重试
+            </button>
           </div>
         )}
 
+        {!selectedImage && (
+          <section>
+            <ImageUploader onImageSelect={handleImageSelect} />
+          </section>
+        )}
+
         {selectedImage && !processedImage && !isProcessing && (
-          <div className="max-w-2xl mx-auto">
+          <section>
             <ProcessingResult
               image={selectedImage}
               previewUrl={previewUrl}
               onProcess={handleProcess}
               onReset={handleReset}
             />
-          </div>
+          </section>
         )}
 
         {isProcessing && (
-          <div className="max-w-2xl mx-auto">
-            <ProcessingProgress progress={progress} />
-          </div>
+          <section>
+            <ProcessingProgress progress={progress} previewUrl={previewUrl} />
+          </section>
         )}
 
-        {processedImage && (
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-white rounded-3xl shadow-2xl p-8">
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl mb-4 shadow-lg">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+        {processedImage && previewUrl && (
+          <section>
+            <div className="rounded-3xl border border-stone-200/90 bg-white/90 p-6 shadow-xl shadow-stone-900/[0.04] backdrop-blur sm:p-8">
+              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-display text-xl font-semibold text-stone-900 sm:text-2xl">
+                    对比预览
+                  </h2>
+                  <p className="mt-1 text-sm text-stone-500">
+                    拖拽圆钮或拖动下方滑块查看分界
+                  </p>
                 </div>
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                  ✨ Background Removed!
-                </h2>
-                <p className="text-gray-500">
-                  Your image has been processed successfully
-                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
+                  >
+                    <Download className="h-4 w-4" />
+                    下载 PNG
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-5 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-400"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    换一张
+                  </button>
+                </div>
               </div>
 
-              {/* 对比预览 */}
-              <div className="mb-8">
-                <ComparisonView
-                  originalUrl={previewUrl!}
-                  processedUrl={processedImage}
-                />
-              </div>
-
-              {/* 操作按钮 */}
-              <div className="flex gap-4 justify-center">
-                <button
-                  onClick={handleDownload}
-                  className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
-                >
-                  <Download className="w-5 h-5" />
-                  Download Image
-                </button>
-                <button
-                  onClick={handleReset}
-                  className="flex items-center gap-2 px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200"
-                >
-                  <RefreshCw className="w-5 h-5" />
-                  Process Another
-                </button>
-              </div>
+              <BeforeAfterCompare
+                beforeUrl={previewUrl}
+                afterUrl={processedImage}
+                beforeLabel="清除前"
+                afterLabel="清除后"
+              />
             </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex items-start gap-4">
-              <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-red-800 mb-2">Error</h3>
-                <p className="text-red-700">{error}</p>
-              </div>
-              <button
-                onClick={handleReset}
-                className="text-red-600 hover:text-red-800 font-medium"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
+          </section>
         )}
       </div>
     </main>
   )
 }
 
-function ProcessingProgress({ progress }: { progress: number }) {
-  return (
-    <div className="bg-white rounded-3xl shadow-2xl p-12 text-center">
-      <div className="relative inline-flex items-center justify-center mb-6">
-        <div className="animate-spin rounded-full h-20 w-20 border-4 border-purple-200"></div>
-        <div className="absolute animate-spin rounded-full h-20 w-20 border-4 border-purple-600 border-t-transparent"></div>
-      </div>
-      
-      <h3 className="text-2xl font-bold text-gray-800 mb-2">
-        Processing Image...
-      </h3>
-      
-      <p className="text-gray-500 mb-6">
-        This may take a few seconds
-      </p>
-
-      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-        <div 
-          className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        ></div>
-      </div>
-      <p className="text-sm text-gray-500">{progress}%</p>
-    </div>
-  )
-}
-
-function ComparisonView({ 
-  originalUrl, 
-  processedUrl 
-}: { 
-  originalUrl: string
-  processedUrl: string 
+function ProcessingProgress({
+  progress,
+  previewUrl,
+}: {
+  progress: number
+  previewUrl: string | null
 }) {
-  const [sliderPosition, setSliderPosition] = useState(50)
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliderPosition(Number(e.target.value))
-  }
-
   return (
-    <div className="relative">
-      {/* 原图 */}
-      <img
-        src={originalUrl}
-        alt="Original"
-        className="w-full rounded-xl shadow-inner"
-        style={{
-          backgroundImage: 'repeating-conic-gradient(#e5e7eb 0% 25%, #fff 0% 50%) 50% / 20px 20px'
-        }}
-      />
-
-      {/* 处理后的图（通过裁剪显示） */}
-      <div className="absolute inset-0 overflow-hidden rounded-xl">
-        <img
-          src={processedUrl}
-          alt="Processed"
-          className="absolute inset-0 w-full h-full"
-          style={{
-            backgroundImage: 'repeating-conic-gradient(#e5e7eb 0% 25%, #fff 0% 50%) 50% / 20px 20px',
-            transform: 'scale(1.1)',
-            clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`
-          }}
-        />
-      </div>
-
-      {/* 滑块 */}
-      <div 
-        className="absolute inset-0 flex items-center"
-        style={{ left: `${sliderPosition}%` }}
-      >
-        <div className="relative">
-          <div className="w-0.5 h-full bg-white shadow-lg"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center">
-            <div className="w-1 h-4 bg-gray-400 rounded-full"></div>
+    <div className="overflow-hidden rounded-3xl border border-stone-200/90 bg-white/90 p-8 shadow-xl shadow-stone-900/[0.04] backdrop-blur sm:p-10">
+      <div className="mx-auto max-w-md text-center">
+        <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center">
+          <div className="absolute h-20 w-20 animate-spin rounded-full border-2 border-teal-200 border-t-teal-700" />
+          <span className="relative text-lg font-semibold tabular-nums text-teal-900">
+            {progress}%
+          </span>
+        </div>
+        <h3 className="font-display text-xl font-semibold text-stone-900">
+          正在抠图…
+        </h3>
+        <p className="mt-2 text-sm text-stone-500">通常只需数秒，请稍候</p>
+        <div className="mt-6 h-2 overflow-hidden rounded-full bg-stone-200">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-teal-600 to-teal-800 transition-[width] duration-300 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        {previewUrl && (
+          <div className="mt-8 overflow-hidden rounded-2xl border border-stone-200/80 bg-stone-100">
+            <p className="border-b border-stone-200/80 bg-white px-3 py-2 text-center text-xs font-medium uppercase tracking-wide text-stone-500">
+              原图预览
+            </p>
+            <div className="checkerboard relative mx-auto max-h-48">
+              <img
+                src={previewUrl}
+                alt="处理中预览"
+                className="mx-auto max-h-48 w-full object-contain"
+              />
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* 控制器 */}
-      <div className="mt-4">
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={sliderPosition}
-          onChange={handleSliderChange}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-        />
-        <div className="flex justify-between mt-2 text-sm text-gray-500">
-          <span>Original</span>
-          <span>Removed</span>
-        </div>
+        )}
       </div>
     </div>
   )

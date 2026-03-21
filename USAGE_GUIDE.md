@@ -186,7 +186,7 @@ A: 不行，需要网络连接调用 API。
 如果使用自己的 API 代理，修改：
 ```typescript
 // app/page.tsx
-const response = await fetch('/api/remove/remove', { ... })
+const response = await fetch('/api/remove-bg', { ... })
 ```
 
 ### 修改文件大小限制

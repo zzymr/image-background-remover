@@ -10,7 +10,12 @@ interface ProcessingResultProps {
   onReset: () => void
 }
 
-export default function ProcessingResult({ image, previewUrl, onProcess, onReset }: ProcessingResultProps) {
+export default function ProcessingResult({
+  image,
+  previewUrl,
+  onProcess,
+  onReset,
+}: ProcessingResultProps) {
   const [preview, setPreview] = useState<string>('')
 
   useEffect(() => {
@@ -26,55 +31,68 @@ export default function ProcessingResult({ image, previewUrl, onProcess, onReset
   const fileSize = (image.size / 1024 / 1024).toFixed(2)
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">
-          Ready to Process
-        </h2>
+    <div className="overflow-hidden rounded-3xl border border-stone-200/90 bg-white/90 shadow-xl shadow-stone-900/[0.04] backdrop-blur">
+      <div className="flex items-center justify-between border-b border-stone-100 px-6 py-4 sm:px-8">
+        <div>
+          <h2 className="font-display text-lg font-semibold text-stone-900 sm:text-xl">
+            待处理
+          </h2>
+          <p className="mt-0.5 text-sm text-stone-500">确认缩略图后点击下方抠图</p>
+        </div>
         <button
+          type="button"
           onClick={onReset}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="rounded-xl p-2.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+          aria-label="取消"
         >
-          <X className="w-5 h-5 text-gray-500" />
+          <X className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="mb-6">
-        <img
-          src={preview}
-          alt="Preview"
-          className="w-full rounded-xl shadow-lg"
-        />
-      </div>
-
-      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-5 mb-6">
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <p className="text-gray-500 mb-1">File name</p>
-            <p className="text-gray-800 font-medium truncate" title={image.name}>
-              {image.name.length > 20 ? image.name.slice(0, 20) + '...' : image.name}
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-500 mb-1">Size</p>
-            <p className="text-gray-800 font-medium">{fileSize} MB</p>
-          </div>
-          <div>
-            <p className="text-gray-500 mb-1">Type</p>
-            <p className="text-gray-800 font-medium capitalize">
-              {image.type.split('/')[1] || 'image'}
-            </p>
-          </div>
+      <div className="px-6 pb-2 pt-4 sm:px-8 sm:pt-6">
+        <div className="overflow-hidden rounded-2xl border border-stone-200/80 bg-stone-50">
+          <img
+            src={preview}
+            alt="预览"
+            className="mx-auto max-h-[min(55vh,420px)] w-full object-contain"
+          />
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="px-6 py-4 sm:px-8">
+        <dl className="grid grid-cols-1 gap-3 rounded-2xl bg-stone-50/90 p-4 text-sm sm:grid-cols-3 sm:gap-4">
+          <div>
+            <dt className="text-stone-500">文件名</dt>
+            <dd
+              className="mt-1 truncate font-medium text-stone-900"
+              title={image.name}
+            >
+              {image.name.length > 28
+                ? `${image.name.slice(0, 28)}…`
+                : image.name}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-stone-500">大小</dt>
+            <dd className="mt-1 font-medium text-stone-900">{fileSize} MB</dd>
+          </div>
+          <div>
+            <dt className="text-stone-500">格式</dt>
+            <dd className="mt-1 font-medium capitalize text-stone-900">
+              {image.type.split('/')[1] || 'image'}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="border-t border-stone-100 p-6 sm:p-8 sm:pt-6">
         <button
+          type="button"
           onClick={onProcess}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-800 py-4 text-base font-semibold text-white shadow-md transition hover:bg-teal-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
         >
-          <Sparkles className="w-5 h-5" />
-          Remove Background
+          <Sparkles className="h-5 w-5" strokeWidth={1.75} />
+          移除背景
         </button>
       </div>
     </div>

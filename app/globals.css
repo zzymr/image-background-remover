@@ -31,3 +31,44 @@ body {
     text-wrap: balance;
   }
 }
+
+/* 透明 PNG 棋盘格背景 */
+.checkerboard {
+  background-color: #eceae4;
+  background-image:
+    linear-gradient(45deg, #d6d3cd 25%, transparent 25%),
+    linear-gradient(-45deg, #d6d3cd 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d6d3cd 75%),
+    linear-gradient(-45deg, transparent 75%, #d6d3cd 75%);
+  background-size: 16px 16px;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+}
+
+.compare-range {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 9999px;
+  background: linear-gradient(to right, rgb(12 74 110 / 0.18), rgb(15 118 110 / 0.35));
+}
+.compare-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: rgb(15 118 110);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+}
+.compare-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: rgb(15 118 110);
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+}
