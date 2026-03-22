@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getCurrentUser } from '@/lib/auth';
+
 export const runtime = 'edge';
 export const maxDuration = 30;
 
@@ -8,6 +10,15 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser(request);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: '请先登录 Google 账号后再使用抠图功能' },
+        { status: 401 }
+      );
+    }
+
     // 获取表单数据
     const formData = await request.formData();
     const imageFile = formData.get('image') as File;

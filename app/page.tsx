@@ -1,19 +1,95 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import {
+  AlertCircle,
+  Download,
+  LogOut,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react'
+
+import BeforeAfterCompare from '@/components/BeforeAfterCompare'
 import ImageUploader from '@/components/ImageUploader'
 import ProcessingResult from '@/components/ProcessingResult'
-import BeforeAfterCompare from '@/components/BeforeAfterCompare'
-import { Download, RefreshCw, AlertCircle, Sparkles } from 'lucide-react'
+import { getAuthErrorMessage, type SessionUser } from '@/lib/auth-shared'
+
+type SessionResponse = {
+  configured: boolean
+  authenticated: boolean
+  user: SessionUser | null
+}
 
 export default function Home() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [processedImage, setProcessedImage] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [authError, setAuthError] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [user, setUser] = useState<SessionUser | null>(null)
+  const [authConfigured, setAuthConfigured] = useState(true)
+  const [isAuthLoading, setIsAuthLoading] = useState(true)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const processedImageRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+
+    const consumeAuthErrorFromQuery = () => {
+      const url = new URL(window.location.href)
+      const authErrorCode = url.searchParams.get('authError')
+
+      if (!authErrorCode) {
+        return
+      }
+
+      setAuthError(getAuthErrorMessage(authErrorCode))
+      url.searchParams.delete('authError')
+      window.history.replaceState({}, '', url.toString())
+    }
+
+    const loadSession = async () => {
+      try {
+        setIsAuthLoading(true)
+
+        const response = await fetch('/api/auth/session', {
+          cache: 'no-store',
+        })
+
+        const data = (await response.json()) as SessionResponse
+
+        if (!active) {
+          return
+        }
+
+        setAuthConfigured(data.configured)
+        setUser(data.user)
+      } catch (err) {
+        console.error('Failed to load session:', err)
+
+        if (!active) {
+          return
+        }
+
+        setAuthConfigured(false)
+        setUser(null)
+      } finally {
+        if (active) {
+          setIsAuthLoading(false)
+        }
+      }
+    }
+
+    consumeAuthErrorFromQuery()
+    void loadSession()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const handleImageSelect = (file: File) => {
     setSelectedImage(file)
@@ -30,8 +106,14 @@ export default function Home() {
   const handleProcess = async () => {
     if (!selectedImage) return
 
+    if (!user) {
+      setAuthError('请先使用 Google 登录，再开始抠图。')
+      return
+    }
+
     setIsProcessing(true)
     setError(null)
+    setAuthError(null)
     setProgress(0)
 
     const progressInterval = setInterval(() => {
@@ -57,9 +139,17 @@ export default function Home() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(
+        const message =
           (errorData as { error?: string }).error || '抠图失败，请重试'
-        )
+
+        if (response.status === 401) {
+          setUser(null)
+          setAuthError(message)
+          setProcessedImage(null)
+          return
+        }
+
+        throw new Error(message)
       }
 
       setProgress(100)
@@ -109,6 +199,33 @@ export default function Home() {
     document.body.removeChild(link)
   }
 
+  const handleLogin = () => {
+    setAuthError(null)
+    window.location.href = '/api/auth/google/start'
+  }
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      setAuthError(null)
+
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        throw new Error('退出登录失败，请重试')
+      }
+
+      handleReset()
+      setUser(null)
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : '退出登录失败')
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-stone-100 text-stone-900">
       <div
@@ -124,9 +241,85 @@ export default function Home() {
             背景消除
           </h1>
           <p className="mx-auto mt-3 max-w-md text-pretty text-sm leading-relaxed text-stone-600 sm:text-base">
-            上传图片，AI 移除背景。完成后可用滑块或并排模式对比清除前与清除后。
+            上传图片，AI 移除背景。现已接入 Google 登录，登录后即可开始抠图。
           </p>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            {isAuthLoading ? (
+              <div className="rounded-full border border-stone-200 bg-white/80 px-4 py-2 text-sm text-stone-500 shadow-sm">
+                正在检查登录状态…
+              </div>
+            ) : user ? (
+              <>
+                <div className="inline-flex items-center gap-3 rounded-full border border-stone-200 bg-white/90 px-4 py-2 shadow-sm">
+                  {user.picture ? (
+                    <img
+                      src={user.picture}
+                      alt={user.name || user.email}
+                      className="h-9 w-9 rounded-full border border-stone-200 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-100 text-sm font-semibold text-teal-800">
+                      {(user.name || user.email).slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-stone-900">
+                      {user.name || 'Google 用户'}
+                    </p>
+                    <p className="text-xs text-stone-500">{user.email}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {isLoggingOut ? '退出中…' : '退出登录'}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleLogin}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-teal-800 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-teal-900"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                使用 Google 登录
+              </button>
+            )}
+          </div>
         </header>
+
+        {authError && (
+          <div
+            className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200/80 bg-amber-50/90 p-4 shadow-sm"
+            role="alert"
+          >
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-amber-900">登录提示</p>
+              <p className="mt-1 text-sm text-amber-800/90">{authError}</p>
+            </div>
+          </div>
+        )}
+
+        {!authConfigured && (
+          <div
+            className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200/80 bg-amber-50/90 p-4 shadow-sm"
+            role="alert"
+          >
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-amber-900">登录配置未完成</p>
+              <p className="mt-1 text-sm text-amber-800/90">
+                请检查 Cloudflare Pages 环境变量、D1 绑定，以及 Google Console 中的回调地址是否已配置。
+              </p>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div
@@ -148,13 +341,41 @@ export default function Home() {
           </div>
         )}
 
-        {!selectedImage && (
+        {!user && !isAuthLoading && (
+          <section>
+            <div className="rounded-3xl border border-stone-200/90 bg-white/90 p-8 shadow-xl shadow-stone-900/[0.04] backdrop-blur sm:p-10">
+              <div className="mx-auto max-w-2xl text-center">
+                <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-800">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+                <h2 className="font-display text-2xl font-semibold text-stone-900">
+                  先登录，再开始抠图
+                </h2>
+                <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-stone-600 sm:text-base">
+                  已接入 Google OAuth 登录，登录成功后会把用户基础信息安全写入 Cloudflare D1，随后你就可以上传图片并调用抠图接口。
+                </p>
+                <div className="mt-6">
+                  <button
+                    type="button"
+                    onClick={handleLogin}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-800 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-teal-900"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    继续使用 Google 登录
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {user && !selectedImage && (
           <section>
             <ImageUploader onImageSelect={handleImageSelect} />
           </section>
         )}
 
-        {selectedImage && !processedImage && !isProcessing && (
+        {user && selectedImage && !processedImage && !isProcessing && (
           <section>
             <ProcessingResult
               image={selectedImage}
@@ -165,13 +386,13 @@ export default function Home() {
           </section>
         )}
 
-        {isProcessing && (
+        {user && isProcessing && (
           <section>
             <ProcessingProgress progress={progress} previewUrl={previewUrl} />
           </section>
         )}
 
-        {processedImage && previewUrl && (
+        {user && processedImage && previewUrl && (
           <section>
             <div className="rounded-3xl border border-stone-200/90 bg-white/90 p-6 shadow-xl shadow-stone-900/[0.04] backdrop-blur sm:p-8">
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

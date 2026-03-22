@@ -25,6 +25,9 @@ load_env_file "$ROOT_DIR/.env.local"
 : "${CLOUDFLARE_API_TOKEN:?Missing CLOUDFLARE_API_TOKEN. Put it in .env.cloudflare.local or export it first.}"
 : "${CLOUDFLARE_ACCOUNT_ID:?Missing CLOUDFLARE_ACCOUNT_ID. Put it in .env.cloudflare.local or export it first.}"
 : "${REMOVEBG_API_KEY:?Missing REMOVEBG_API_KEY. Put it in .env.local or export it first.}"
+: "${GOOGLE_CLIENT_ID:?Missing GOOGLE_CLIENT_ID. Put it in .env.local or export it first.}"
+: "${GOOGLE_CLIENT_SECRET:?Missing GOOGLE_CLIENT_SECRET. Put it in .env.local or export it first.}"
+: "${SESSION_SECRET:?Missing SESSION_SECRET. Put it in .env.local or export it first.}"
 
 export CLOUDFLARE_API_TOKEN
 export CLOUDFLARE_ACCOUNT_ID
@@ -46,8 +49,11 @@ npm run pages:build
 
 echo
 
-echo "🔐 Updating Pages secret"
+echo "🔐 Updating Pages secrets"
 printf '%s' "$REMOVEBG_API_KEY" | wrangler pages secret put REMOVEBG_API_KEY --project-name="$PROJECT_NAME"
+printf '%s' "$GOOGLE_CLIENT_ID" | wrangler pages secret put GOOGLE_CLIENT_ID --project-name="$PROJECT_NAME"
+printf '%s' "$GOOGLE_CLIENT_SECRET" | wrangler pages secret put GOOGLE_CLIENT_SECRET --project-name="$PROJECT_NAME"
+printf '%s' "$SESSION_SECRET" | wrangler pages secret put SESSION_SECRET --project-name="$PROJECT_NAME"
 
 echo
 
