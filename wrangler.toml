@@ -9,7 +9,7 @@ pages_build_output_dir = ".vercel/output/static"
 [[d1_databases]]
 binding = "DB"
 database_name = "image-background-remover-db"
-database_id = "00000000-0000-0000-0000-000000000000" # TODO: 替换为真实 D1 database_id
+database_id = "dd022a2a-b14c-4824-9aea-c8f5a6974490"
 migrations_dir = "migrations"
 
 # 如需独立的预览库，可取消注释并填入 preview_database_id
