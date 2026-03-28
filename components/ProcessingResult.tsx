@@ -2,16 +2,37 @@
 
 import { useEffect, useState } from 'react'
 
-interface ProcessingResultProps {
-  image: File
-  onProcess: () => void
-  onReset: () => void
+type ProcessSuccessPayload = {
+  image: string
+  size: number
+  jobId?: string | null
 }
 
-export default function ProcessingResult({ image, onProcess, onReset }: ProcessingResultProps) {
-  const [preview, setPreview] = useState<string>('')
+interface ProcessingResultProps {
+  image: File
+  sessionId?: string | null
+  onSuccess: (payload: ProcessSuccessPayload) => void
+  onReset: () => void
+  onHistoryRefresh?: () => void
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) {
+    return `${Math.round(bytes / 1024)} KB`
+  }
+
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`
+}
+
+export default function ProcessingResult({
+  image,
+  sessionId,
+  onSuccess,
+  onReset,
+  onHistoryRefresh,
+}: ProcessingResultProps) {
+  const [preview, setPreview] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
-  const [processedImage, setProcessedImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -20,153 +41,128 @@ export default function ProcessingResult({ image, onProcess, onReset }: Processi
     return () => URL.revokeObjectURL(url)
   }, [image])
 
-  const handleProcess = async () => {
+  async function handleProcess() {
     setIsProcessing(true)
     setError(null)
-    onProcess()
 
     try {
-      // Prepare form data
       const formData = new FormData()
       formData.append('image', image)
 
-      // Call API
+      if (sessionId) {
+        formData.append('sessionId', sessionId)
+      }
+
       const response = await fetch('/api/remove-background', {
         method: 'POST',
+        headers: sessionId
+          ? {
+              'x-client-session-id': sessionId,
+            }
+          : undefined,
         body: formData,
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to remove background')
+        throw new Error(data.error || 'Failed to remove background.')
       }
 
-      // Show processed image
-      setProcessedImage(data.image)
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred'
-      setError(errorMessage)
-      console.error('Error processing image:', err)
-
-      // Notify parent component
-      setTimeout(() => {
-        // Send error to parent via custom event or callback
-        window.dispatchEvent(new CustomEvent('processing-error', { detail: errorMessage }))
-      }, 100)
+      onSuccess({
+        image: data.image,
+        size: data.size,
+        jobId: data.jobId,
+      })
+      onHistoryRefresh?.()
+    } catch (processingError) {
+      setError(
+        processingError instanceof Error
+          ? processingError.message
+          : 'An unexpected error occurred while removing the background.',
+      )
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const fileSize = (image.size / 1024 / 1024).toFixed(2)
-
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-2xl shadow-xl p-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          Ready to Remove Background
-        </h2>
+    <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+      <div className="overflow-hidden rounded-[30px] bg-[var(--surface-low)] p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">
+            Selected image
+          </span>
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[var(--muted)] shadow-sm">
+            Ready to process
+          </span>
+        </div>
+        <div className="overflow-hidden rounded-[24px] bg-white">
+          <img src={preview} alt={image.name} className="h-full w-full object-cover" />
+        </div>
+      </div>
 
-        <div className="mb-6">
-          <img
-            src={preview}
-            alt="Preview"
-            className="w-full rounded-lg shadow-md"
-          />
+      <div className="space-y-6">
+        <div>
+          <p className="eyebrow">Processing setup</p>
+          <h3 className="mt-3 font-headline text-3xl font-extrabold tracking-[-0.05em] text-[var(--ink)]">
+            One high-resolution cutout. One credit.
+          </h3>
+          <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+            Your file is validated locally before we send it to remove.bg. If D1 is configured, this processing job will also be recorded into your history ledger.
+          </p>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">File name:</span>
-            <span className="text-gray-800 font-medium">{image.name}</span>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-[24px] bg-[var(--surface-low)] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
+              File name
+            </p>
+            <p className="mt-2 text-sm font-medium text-[var(--ink)]">{image.name}</p>
           </div>
-          <div className="flex justify-between text-sm mt-2">
-            <span className="text-gray-600">File size:</span>
-            <span className="text-gray-800 font-medium">{fileSize} MB</span>
+          <div className="rounded-[24px] bg-[var(--surface-low)] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
+              File size
+            </p>
+            <p className="mt-2 text-sm font-medium text-[var(--ink)]">{formatFileSize(image.size)}</p>
           </div>
-          <div className="flex justify-between text-sm mt-2">
-            <span className="text-gray-600">Type:</span>
-            <span className="text-gray-800 font-medium">{image.type}</span>
+          <div className="rounded-[24px] bg-[var(--surface-low)] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
+              MIME type
+            </p>
+            <p className="mt-2 text-sm font-medium text-[var(--ink)]">{image.type}</p>
+          </div>
+          <div className="rounded-[24px] bg-[var(--surface-low)] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
+              Output
+            </p>
+            <p className="mt-2 text-sm font-medium text-[var(--ink)]">Transparent PNG</p>
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start">
-              <svg className="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <div>
-                <p className="text-red-700 font-medium">Error</p>
-                <p className="text-red-600 text-sm mt-1">{error}</p>
-              </div>
-            </div>
+          <div className="rounded-[24px] bg-[rgba(179,27,37,0.06)] p-5 text-sm leading-7 text-[var(--error)]">
+            <p className="font-semibold">We couldn&apos;t process this image.</p>
+            <p className="mt-1">{error}</p>
           </div>
         )}
 
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button
             onClick={handleProcess}
             disabled={isProcessing}
-            className={`flex-1 px-6 py-3 text-white rounded-lg font-semibold transition ${
-              isProcessing
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90'
-            }`}
+            className="inline-flex flex-1 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0057bd_0%,#004ca6_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(0,87,189,0.22)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {isProcessing ? 'Processing...' : 'Remove Background ✨'}
+            {isProcessing ? 'Removing background…' : 'Remove background'}
           </button>
           <button
             onClick={onReset}
             disabled={isProcessing}
-            className={`px-6 py-3 rounded-lg font-semibold transition ${
-              isProcessing
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+            className="inline-flex items-center justify-center rounded-full bg-[var(--surface-low)] px-5 py-3.5 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--surface-high)] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Cancel
+            Choose another image
           </button>
         </div>
-
-        {processedImage && (
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
-              ✨ Background Removed!
-            </h3>
-            <div className="mb-6">
-              <img
-                src={processedImage}
-                alt="Processed"
-                className="w-full rounded-lg shadow-md"
-              />
-            </div>
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={() => {
-                  const link = document.createElement('a')
-                  link.href = processedImage
-                  link.download = 'background-removed.png'
-                  link.click()
-                }}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:opacity-90 transition"
-              >
-                Download Image
-              </button>
-              <button
-                onClick={() => {
-                  setProcessedImage(null)
-                  setError(null)
-                }}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition"
-              >
-                Process Another
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
