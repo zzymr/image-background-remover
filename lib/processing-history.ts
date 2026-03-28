@@ -76,7 +76,7 @@ export async function createProcessingJob(input: {
 
   await ensureProcessingHistorySchema()
 
-  const jobId = randomUUID()
+  const jobId = globalThis.crypto.randomUUID()
 
   await d1Exec(
     `

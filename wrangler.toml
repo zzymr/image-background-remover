@@ -1,0 +1,13 @@
+name = "image-background-remover"
+compatibility_date = "2026-03-21"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "image-background-remover-db"
+database_id = "dd022a2a-b14c-4824-9aea-c8f5a6974490"
+migrations_dir = "migrations"
+
+[vars]
+NODE_VERSION = "20"

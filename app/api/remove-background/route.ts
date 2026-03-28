@@ -5,6 +5,7 @@ import {
   markProcessingJobFailed,
 } from '@/lib/processing-history'
 
+export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
 const REMOVE_BG_API_KEY = process.env.REMOVE_BG_API_KEY
@@ -12,6 +13,19 @@ const REMOVE_BG_API_URL = process.env.REMOVE_BG_API_URL || 'https://api.remove.b
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status })
+}
+
+function arrayBufferToBase64(arrayBuffer: ArrayBuffer) {
+  let binary = ''
+  const bytes = new Uint8Array(arrayBuffer)
+  const chunkSize = 0x8000
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize)
+    binary += String.fromCharCode(...chunk)
+  }
+
+  return btoa(binary)
 }
 
 export async function POST(request: NextRequest) {
@@ -56,7 +70,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const imageBuffer = Buffer.from(await image.arrayBuffer())
+    const imageBuffer = await image.arrayBuffer()
     const blob = new Blob([imageBuffer], { type: image.type })
 
     const apiFormData = new FormData()
@@ -92,8 +106,9 @@ export async function POST(request: NextRequest) {
 
     const processedImageBlob = await response.blob()
     const arrayBuffer = await processedImageBlob.arrayBuffer()
-    const base64 = Buffer.from(arrayBuffer).toString('base64')
-    const dataUrl = `data:${processedImageBlob.type};base64,${base64}`
+    const base64 = arrayBufferToBase64(arrayBuffer)
+    const mimeType = processedImageBlob.type || 'image/png'
+    const dataUrl = `data:${mimeType};base64,${base64}`
 
     try {
       await markProcessingJobCompleted(jobId, processedImageBlob.size)

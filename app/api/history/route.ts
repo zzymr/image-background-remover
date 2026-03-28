@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getProcessingHistory, getProcessingSummary } from '@/lib/processing-history'
 import { isD1Configured } from '@/lib/d1'
 
+export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
