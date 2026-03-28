@@ -24,10 +24,12 @@ load_env_file() {
 load_env_file "$ROOT_DIR/.env.cloudflare.local"
 load_env_file "$ROOT_DIR/.env.local"
 
+REMOVE_BG_API_KEY="${REMOVE_BG_API_KEY:-${REMOVEBG_API_KEY:-}}"
+
 : "${CLOUDFLARE_API_TOKEN:?Missing CLOUDFLARE_API_TOKEN. Put it in .env.cloudflare.local or export it first.}"
 : "${CLOUDFLARE_ACCOUNT_ID:?Missing CLOUDFLARE_ACCOUNT_ID. Put it in .env.cloudflare.local or export it first.}"
 : "${CLOUDFLARE_D1_DATABASE_ID:?Missing CLOUDFLARE_D1_DATABASE_ID. Put it in .env.local or export it first.}"
-: "${REMOVEBG_API_KEY:?Missing REMOVEBG_API_KEY. Put it in .env.local or export it first.}"
+: "${REMOVE_BG_API_KEY:?Missing REMOVE_BG_API_KEY. Put it in .env.local or export it first.}"
 
 cloudflare_api() {
   local method="$1"
@@ -91,7 +93,7 @@ PATCH_PAYLOAD="$(cat <<JSON
 {
   \"build_config\": {
     \"build_command\": \"npm run pages:build\",
-    \"destination_dir\": \\".vercel/output/static\\",
+    \"destination_dir\": \".vercel/output/static\",
     \"root_dir\": \"/\",
     \"build_caching\": true
   },
@@ -101,7 +103,8 @@ PATCH_PAYLOAD="$(cat <<JSON
       \"compatibility_flags\": [\"nodejs_compat\"],
       \"env_vars\": {
         \"NODE_VERSION\": { \"type\": \"plain_text\", \"value\": \"$NODE_VERSION\" },
-        \"REMOVEBG_API_KEY\": { \"type\": \"secret_text\", \"value\": \"$REMOVEBG_API_KEY\" },
+        \"REMOVE_BG_API_KEY\": { \"type\": \"secret_text\", \"value\": \"$REMOVE_BG_API_KEY\" },
+        \"REMOVEBG_API_KEY\": { \"type\": \"secret_text\", \"value\": \"$REMOVE_BG_API_KEY\" },
         \"CLOUDFLARE_ACCOUNT_ID\": { \"type\": \"secret_text\", \"value\": \"$CLOUDFLARE_ACCOUNT_ID\" },
         \"CLOUDFLARE_D1_DATABASE_ID\": { \"type\": \"secret_text\", \"value\": \"$CLOUDFLARE_D1_DATABASE_ID\" },
         \"CLOUDFLARE_API_TOKEN\": { \"type\": \"secret_text\", \"value\": \"$CLOUDFLARE_API_TOKEN\" }
@@ -112,7 +115,8 @@ PATCH_PAYLOAD="$(cat <<JSON
       \"compatibility_flags\": [\"nodejs_compat\"],
       \"env_vars\": {
         \"NODE_VERSION\": { \"type\": \"plain_text\", \"value\": \"$NODE_VERSION\" },
-        \"REMOVEBG_API_KEY\": { \"type\": \"secret_text\", \"value\": \"$REMOVEBG_API_KEY\" },
+        \"REMOVE_BG_API_KEY\": { \"type\": \"secret_text\", \"value\": \"$REMOVE_BG_API_KEY\" },
+        \"REMOVEBG_API_KEY\": { \"type\": \"secret_text\", \"value\": \"$REMOVE_BG_API_KEY\" },
         \"CLOUDFLARE_ACCOUNT_ID\": { \"type\": \"secret_text\", \"value\": \"$CLOUDFLARE_ACCOUNT_ID\" },
         \"CLOUDFLARE_D1_DATABASE_ID\": { \"type\": \"secret_text\", \"value\": \"$CLOUDFLARE_D1_DATABASE_ID\" },
         \"CLOUDFLARE_API_TOKEN\": { \"type\": \"secret_text\", \"value\": \"$CLOUDFLARE_API_TOKEN\" }
