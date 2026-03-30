@@ -78,16 +78,18 @@ export default function Home() {
         <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-end">
           <div className="space-y-8">
             <div className="inline-flex items-center rounded-full border border-white/70 bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--muted)] shadow-sm backdrop-blur">
-              Premium editorial AI for clean product imagery
+              A polished product story for clean, ready-to-use image cutouts
             </div>
 
             <div className="space-y-5">
               <h1 className="max-w-4xl font-headline text-5xl font-extrabold leading-[0.95] tracking-[-0.07em] text-[var(--ink)] sm:text-6xl lg:text-7xl">
-                Remove backgrounds with a product experience that feels{' '}
-                <span className="gradient-text">more premium than a demo.</span>
+                Clean backgrounds. Clear pricing. A product page that sells the{' '}
+                <span className="gradient-text">experience, not the tech stack.</span>
               </h1>
               <p className="max-w-2xl text-base leading-8 text-[var(--muted)] sm:text-lg">
-                Ethereal Cutout turns background removal into a polished SaaS workflow — premium landing page, clear credits pricing, and Cloudflare D1-backed job history for the images you actually process.
+                Ethereal Cutout packages AI background removal into a polished experience for creators,
+                catalog teams, and visual brands. Understand the offer, explore the pricing, and try the
+                workflow in one place.
               </p>
             </div>
 
@@ -96,7 +98,7 @@ export default function Home() {
                 href="#tool"
                 className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#0057bd_0%,#004ca6_100%)] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(0,87,189,0.24)] transition hover:-translate-y-0.5"
               >
-                Start with an image
+                Try the workflow
               </Link>
               <Link
                 href="/pricing"
@@ -122,11 +124,13 @@ export default function Home() {
                 <p className="mt-2 text-sm text-[var(--muted)]">{featuredPlan.credits} credits each month.</p>
               </div>
               <div className="glass-panel p-5">
-                <p className="eyebrow">Data layer</p>
+                <p className="eyebrow">Best for</p>
                 <p className="mt-3 font-headline text-3xl font-extrabold tracking-[-0.05em] text-[var(--ink)]">
-                  D1
+                  Teams
                 </p>
-                <p className="mt-2 text-sm text-[var(--muted)]">Job history stored for repeat workflows.</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  Product imagery, creator assets, and campaign visuals.
+                </p>
               </div>
             </div>
           </div>
@@ -134,16 +138,16 @@ export default function Home() {
           <div className="editorial-card relative overflow-hidden p-7 sm:p-8">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(110,159,255,0.24),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(137,60,146,0.10),transparent_35%)]" />
             <div className="relative">
-              <p className="eyebrow">Why this rebuild matters</p>
+              <p className="eyebrow">Why this product page works</p>
               <h2 className="mt-3 font-headline text-3xl font-extrabold tracking-[-0.05em] text-[var(--ink)]">
-                A full product shell, not just a single upload widget.
+                It explains the value before it asks for the upload.
               </h2>
               <div className="mt-6 space-y-4 text-sm leading-7 text-[var(--ink)]">
                 {[
-                  'Editorial-inspired homepage with more premium positioning.',
-                  'Dedicated pricing page with monthly plans and pay-as-you-go credits.',
-                  'Cloudflare D1 processing history so data survives beyond the current tab.',
-                  'Same remove.bg core, packaged like a real SaaS product.',
+                  'Clear positioning for creators, storefront teams, and marketing workflows.',
+                  'Dedicated pricing page with monthly plans and flexible credit bundles.',
+                  'Recent activity for repeat work, comparisons, and fast follow-up edits.',
+                  'A premium visual system that feels customer-ready instead of experimental.',
                 ].map((item) => (
                   <div key={item} className="flex gap-3 rounded-[22px] bg-white/80 p-4 backdrop-blur">
                     <span className="mt-2 h-2 w-2 rounded-full bg-[var(--brand)]" />
@@ -162,17 +166,17 @@ export default function Home() {
             {
               step: '01',
               title: 'Upload a source image',
-              body: 'Drag in a product photo, campaign visual, or profile shot. The UI gives the asset room to breathe instead of boxing it into a generic template.',
+              body: 'Drag in a product photo, campaign visual, or profile shot. The interface keeps the experience calm, focused, and easy to understand from the first click.',
             },
             {
               step: '02',
-              title: 'Process through remove.bg',
-              body: 'We validate the file, call remove.bg, and return a transparent PNG cutout with one-click download.',
+              title: 'Generate the clean cutout',
+              body: 'We validate the file, process the background removal, and return a transparent PNG cutout that is ready for product pages, course covers, and social assets.',
             },
             {
               step: '03',
-              title: 'Persist job history in D1',
-              body: 'When D1 is configured, every job can be recorded so the app feels stateful, operational, and ready for future billing or reporting layers.',
+              title: 'Download and review recent work',
+              body: 'Save the result instantly, then use the recent activity panel to compare outputs and keep repeat jobs organized when you return to the page.',
             },
           ].map((item) => (
             <article key={item.step} className="editorial-card p-8">
@@ -189,13 +193,13 @@ export default function Home() {
       <section id="tool" className="shell pb-20 sm:pb-24">
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="eyebrow">Tool stage</p>
+            <p className="eyebrow">Interactive preview</p>
             <h2 className="mt-3 font-headline text-4xl font-extrabold tracking-[-0.06em] text-[var(--ink)] sm:text-5xl">
-              The actual background-removal workflow, rebuilt in the new product shell.
+              Try the workflow inside the product experience.
             </h2>
           </div>
           <p className="max-w-md text-sm leading-7 text-[var(--muted)]">
-            Upload, process, download, then review the job in your D1-backed history sidebar.
+            Upload an image, generate a clean cutout, download the result, and review recent activity without leaving the page.
           </p>
         </div>
 
@@ -261,7 +265,7 @@ export default function Home() {
           <div>
             <p className="eyebrow">Pricing preview</p>
             <h2 className="mt-3 font-headline text-4xl font-extrabold tracking-[-0.06em] text-[var(--ink)] sm:text-5xl">
-              Monthly plans lightly above the official benchmark. Per-use pricing still clearly structured.
+              Straightforward plans for solo creators, growing shops, and higher-volume teams.
             </h2>
           </div>
           <Link href="/pricing" className="text-sm font-semibold text-[var(--brand)] transition hover:text-[var(--brand-deep)]">

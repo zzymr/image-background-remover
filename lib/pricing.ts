@@ -26,7 +26,7 @@ export const monthlyPlans: MonthlyPlan[] = [
       '40 full-resolution cutouts every month',
       'Transparent PNG exports',
       'Commercial-friendly workflow',
-      'Processing history backed by D1',
+      'Recent activity for repeat work',
     ],
     cta: 'Start Lite',
   },

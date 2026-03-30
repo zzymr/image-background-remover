@@ -15,7 +15,7 @@ export default function PricingGrid({ compact = false }: PricingGridProps) {
           <div>
             <p className="eyebrow">Monthly plans</p>
             <h2 className="font-headline text-3xl font-extrabold tracking-[-0.05em] text-[var(--ink)] sm:text-4xl">
-              Subscription pricing with a gentle step-up from remove.bg.
+              Subscription pricing designed for repeat creative output.
             </h2>
           </div>
           <p className="max-w-md text-sm leading-7 text-[var(--muted)]">
@@ -120,7 +120,7 @@ export default function PricingGrid({ compact = false }: PricingGridProps) {
           <div>
             <p className="eyebrow">Pricing rules</p>
             <h3 className="font-headline text-3xl font-extrabold tracking-[-0.05em] text-[var(--ink)]">
-              Clear enough for customers. Structured enough for product and billing.
+              Clear enough for customers. Structured enough to scale.
             </h3>
           </div>
           <ul className="space-y-3 text-sm leading-7 text-[var(--ink)]">

@@ -8,7 +8,7 @@ export default function SiteFooter() {
         <div className="space-y-4">
           <BrandMark />
           <p className="max-w-xl text-sm leading-7 text-[var(--muted)]">
-            A premium AI background-removal experience for creators, catalog teams, and modern ecommerce workflows. Fast cutouts, thoughtful pricing, and a D1-backed history layer for production visibility.
+            A premium AI background-removal experience for creators, catalog teams, and modern ecommerce workflows. Fast cutouts, thoughtful pricing, and a polished product story from first visit to download.
           </p>
         </div>
 
@@ -18,7 +18,7 @@ export default function SiteFooter() {
           </h3>
           <div className="mt-4 space-y-3 text-sm text-[var(--ink)]">
             <Link href="/#tool" className="block hover:text-[var(--brand)]">
-              Tool
+              Product
             </Link>
             <Link href="/#workflow" className="block hover:text-[var(--brand)]">
               Workflow

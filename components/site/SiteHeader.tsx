@@ -46,7 +46,7 @@ export default function SiteHeader() {
             href="/#tool"
             className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#0057bd_0%,#004ca6_100%)] px-4 py-2 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(0,87,189,0.28)] transition hover:-translate-y-0.5"
           >
-            Launch tool
+            Try the workflow
           </Link>
         </div>
       </div>

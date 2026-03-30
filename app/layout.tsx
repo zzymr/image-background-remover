@@ -17,7 +17,7 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: 'Ethereal Cutout — Premium AI Background Removal',
   description:
-    'A premium editorial AI experience for fast, high-quality background removal, flexible credits, and D1-backed processing history.',
+    'A premium editorial experience for fast, high-quality background removal, clear pricing, and a polished product story.',
 }
 
 export default function RootLayout({

@@ -118,12 +118,12 @@ export default function ProcessingHistory({ sessionId, refreshKey = 0 }: Process
     <aside id="history" className="editorial-card h-full p-6 sm:p-7">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="eyebrow">D1 activity</p>
+          <p className="eyebrow">Recent activity</p>
           <h3 className="mt-3 font-headline text-2xl font-extrabold tracking-[-0.05em] text-[var(--ink)]">
             Processing history
           </h3>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-            Every completed job can be written to Cloudflare D1, giving this tool a real data layer instead of a throwaway demo feel.
+            Review the files you&apos;ve processed recently so repeat work stays organized and easy to compare.
           </p>
         </div>
       </div>
@@ -155,9 +155,9 @@ export default function ProcessingHistory({ sessionId, refreshKey = 0 }: Process
 
       {history && !history.configured && !loading && (
         <div className="mt-6 rounded-[22px] bg-[rgba(137,60,146,0.08)] p-4 text-sm leading-7 text-[var(--ink)]">
-          <p className="font-semibold">Cloudflare D1 is not configured yet.</p>
+          <p className="font-semibold">Recent activity is temporarily unavailable.</p>
           <p className="mt-1 text-[var(--muted)]">
-            Add <code>CLOUDFLARE_ACCOUNT_ID</code>, <code>CLOUDFLARE_D1_DATABASE_ID</code>, and <code>CLOUDFLARE_API_TOKEN</code> to persist history.
+            You can still process and download images normally.
           </p>
         </div>
       )}

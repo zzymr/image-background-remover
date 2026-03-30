@@ -8,10 +8,10 @@ export default function PricingPage() {
           <div>
             <p className="eyebrow">Pricing</p>
             <h1 className="mt-4 max-w-4xl font-headline text-5xl font-extrabold leading-[0.95] tracking-[-0.07em] text-[var(--ink)] sm:text-6xl">
-              Transparent credits pricing for background removal that can scale beyond a single page.
+              Straightforward credits pricing for teams that want clean image output without guesswork.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--muted)] sm:text-lg">
-              We keep the remove.bg mental model because it works: 1 image equals 1 credit. Then we add a cleaner product shell, slightly elevated pricing, and a D1-backed processing ledger you can grow into billing, analytics, or customer history.
+              Each image uses one credit. Choose a monthly plan for repeat work or a one-time bundle for flexible projects. The structure is simple, predictable, and easy to explain to customers.
             </p>
           </div>
 
@@ -20,14 +20,14 @@ export default function PricingPage() {
               <p className="eyebrow">How it works</p>
               <h2 className="mt-3 font-headline text-2xl font-bold text-[var(--ink)]">1 image = 1 credit</h2>
               <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                Keep the model simple for users and flexible for future product extensions.
+                A clean model that stays easy to understand for both first-time buyers and repeat customers.
               </p>
             </div>
             <div className="rounded-[28px] bg-[var(--surface-low)] p-6">
               <p className="eyebrow">Billing shape</p>
               <h2 className="mt-3 font-headline text-2xl font-bold text-[var(--ink)]">Monthly + one-time</h2>
               <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                Subscription plans for repeat workflows, and pay-as-you-go bundles for irregular volume.
+                Subscription plans for steady workflows, and flexible bundles for project-based or seasonal demand.
               </p>
             </div>
           </div>
@@ -49,8 +49,8 @@ export default function PricingPage() {
             body: 'No. Subscription credits renew each billing cycle. This keeps the pricing model predictable and encourages upgrade paths when usage increases.',
           },
           {
-            title: 'Why store processing history in D1?',
-            body: 'Because a serious product needs durable state. D1 gives this app a foundation for job history, analytics, and future billing logic.',
+            title: 'Can I review recent activity?',
+            body: 'Yes. Returning users can review recent jobs from the same session, which makes it easier to compare results and keep repeat work organized.',
           },
         ].map((faq) => (
           <article key={faq.title} className="editorial-card p-8">

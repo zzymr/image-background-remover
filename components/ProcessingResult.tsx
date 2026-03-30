@@ -109,7 +109,7 @@ export default function ProcessingResult({
             One high-resolution cutout. One credit.
           </h3>
           <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
-            Your file is validated locally before we send it to remove.bg. If D1 is configured, this processing job will also be recorded into your history ledger.
+            Your file is validated before processing so the experience stays quick, clear, and easy to trust. Once the cutout is ready, you can download it immediately and review it in recent activity.
           </p>
         </div>
 
