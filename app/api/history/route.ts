@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getProcessingHistory, getProcessingSummary } from '@/lib/processing-history'
 import { isD1Configured } from '@/lib/d1'
+import { getCurrentUser, isAuthConfigured } from '@/lib/auth'
 
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
@@ -11,7 +12,14 @@ export async function GET(request: NextRequest) {
     const sessionId =
       searchParams.get('sessionId') || request.headers.get('x-client-session-id') || undefined
 
-    if (!sessionId) {
+    const authEnabled = isAuthConfigured()
+    const user = authEnabled ? await getCurrentUser(request) : null
+
+    if (authEnabled && !user) {
+      return NextResponse.json({ error: 'Please sign in to view your history.' }, { status: 401 })
+    }
+
+    if (!sessionId && !user?.id) {
       return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 })
     }
 
@@ -28,9 +36,14 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    const scope = {
+      sessionId,
+      userId: user?.id,
+    }
+
     const [items, summary] = await Promise.all([
-      getProcessingHistory(sessionId),
-      getProcessingSummary(sessionId),
+      getProcessingHistory(scope),
+      getProcessingSummary(scope),
     ])
 
     return NextResponse.json({
@@ -40,9 +53,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching processing history:', error)
-    return NextResponse.json(
-      { error: 'Failed to load processing history.' },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: 'Failed to load processing history.' }, { status: 500 })
   }
 }

@@ -87,79 +87,60 @@ export default function ProcessingResult({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-      <div className="overflow-hidden rounded-[30px] bg-[var(--surface-low)] p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">
-            Selected image
-          </span>
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[var(--muted)] shadow-sm">
+    <div className="grid gap-6 lg:grid-cols-[1fr_0.92fr] lg:items-start">
+      <div className="rounded-[28px] bg-[var(--surface-low)] p-4">
+        <div className="mb-4 flex items-center justify-between text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
+          <span>Selected image</span>
+          <span className="rounded-full bg-white px-3 py-1 text-[10px] font-semibold text-[var(--muted)]">
             Ready to process
           </span>
         </div>
-        <div className="overflow-hidden rounded-[24px] bg-white">
+        <div className="overflow-hidden rounded-[22px] bg-white">
           <img src={preview} alt={image.name} className="h-full w-full object-cover" />
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div>
-          <p className="eyebrow">Processing setup</p>
-          <h3 className="mt-3 font-headline text-3xl font-extrabold tracking-[-0.05em] text-[var(--ink)]">
-            One high-resolution cutout. One credit.
-          </h3>
-          <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
-            Your file is validated before processing so the experience stays quick, clear, and easy to trust. Once the cutout is ready, you can download it immediately and review it in recent activity.
-          </p>
-        </div>
+      <div className="editorial-card p-8">
+        <p className="eyebrow">Processing setup</p>
+        <h3 className="mt-3 font-headline text-3xl font-extrabold tracking-[-0.05em] text-[var(--ink)]">
+          One clean cutout. One credit.
+        </h3>
+        <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
+          Your file is validated before processing so the experience stays quick,
+          clear, and easy to trust.
+        </p>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-[24px] bg-[var(--surface-low)] p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
-              File name
-            </p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div className="soft-panel p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">File name</p>
             <p className="mt-2 text-sm font-medium text-[var(--ink)]">{image.name}</p>
           </div>
-          <div className="rounded-[24px] bg-[var(--surface-low)] p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
-              File size
-            </p>
+          <div className="soft-panel p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">File size</p>
             <p className="mt-2 text-sm font-medium text-[var(--ink)]">{formatFileSize(image.size)}</p>
           </div>
-          <div className="rounded-[24px] bg-[var(--surface-low)] p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
-              MIME type
-            </p>
+          <div className="soft-panel p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">MIME type</p>
             <p className="mt-2 text-sm font-medium text-[var(--ink)]">{image.type}</p>
           </div>
-          <div className="rounded-[24px] bg-[var(--surface-low)] p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--muted)]">
-              Output
-            </p>
+          <div className="soft-panel p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Output</p>
             <p className="mt-2 text-sm font-medium text-[var(--ink)]">Transparent PNG</p>
           </div>
         </div>
 
         {error && (
-          <div className="rounded-[24px] bg-[rgba(179,27,37,0.06)] p-5 text-sm leading-7 text-[var(--error)]">
+          <div className="mt-6 rounded-[22px] bg-[rgba(179,27,37,0.06)] p-4 text-sm leading-7 text-[var(--error)]">
             <p className="font-semibold">We couldn&apos;t process this image.</p>
             <p className="mt-1">{error}</p>
           </div>
         )}
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <button
-            onClick={handleProcess}
-            disabled={isProcessing}
-            className="inline-flex flex-1 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0057bd_0%,#004ca6_100%)] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_20px_40px_rgba(0,87,189,0.22)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isProcessing ? 'Removing background…' : 'Remove background'}
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <button onClick={handleProcess} disabled={isProcessing} className="primary-button disabled:cursor-not-allowed disabled:opacity-70">
+            {isProcessing ? 'Removing background…' : 'Remove Background'}
           </button>
-          <button
-            onClick={onReset}
-            disabled={isProcessing}
-            className="inline-flex items-center justify-center rounded-full bg-[var(--surface-low)] px-5 py-3.5 text-sm font-semibold text-[var(--ink)] transition hover:bg-[var(--surface-high)] disabled:cursor-not-allowed disabled:opacity-70"
-          >
+          <button onClick={onReset} disabled={isProcessing} className="secondary-button disabled:cursor-not-allowed disabled:opacity-70">
             Choose another image
           </button>
         </div>

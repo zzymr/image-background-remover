@@ -1,9 +1,9 @@
-import { randomUUID } from 'crypto'
 import { d1Exec, d1Query, isD1Configured } from '@/lib/d1'
 
 export type ProcessingHistoryItem = {
   id: string
   sessionId: string
+  userId: string | null
   sourceFilename: string | null
   mimeType: string | null
   fileSize: number | null
@@ -22,10 +22,16 @@ export type ProcessingSummary = {
   creditsUsed: number
 }
 
+type HistoryScope = {
+  sessionId?: string | null
+  userId?: string | null
+}
+
 const PROCESSING_HISTORY_SCHEMA = `
 CREATE TABLE IF NOT EXISTS processing_jobs (
   id TEXT PRIMARY KEY,
   session_id TEXT NOT NULL,
+  user_id TEXT,
   source_filename TEXT,
   mime_type TEXT,
   file_size INTEGER,
@@ -39,6 +45,8 @@ CREATE TABLE IF NOT EXISTS processing_jobs (
 );
 CREATE INDEX IF NOT EXISTS idx_processing_jobs_session_created_at
   ON processing_jobs(session_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_processing_jobs_user_created_at
+  ON processing_jobs(user_id, created_at DESC);
 `
 
 let schemaPromise: Promise<void> | null = null
@@ -55,7 +63,18 @@ async function ensureProcessingHistorySchema() {
   }
 
   if (!schemaPromise) {
-    schemaPromise = d1Exec(PROCESSING_HISTORY_SCHEMA).catch((error) => {
+    schemaPromise = (async () => {
+      await d1Exec(PROCESSING_HISTORY_SCHEMA)
+
+      try {
+        await d1Exec('ALTER TABLE processing_jobs ADD COLUMN user_id TEXT')
+      } catch (error) {
+        const message = error instanceof Error ? error.message.toLowerCase() : ''
+        if (!message.includes('duplicate') && !message.includes('exists')) {
+          throw error
+        }
+      }
+    })().catch((error) => {
       schemaPromise = null
       throw error
     })
@@ -64,8 +83,33 @@ async function ensureProcessingHistorySchema() {
   await schemaPromise
 }
 
+function buildScope(scope: HistoryScope) {
+  const clauses: string[] = []
+  const params: Array<string> = []
+
+  if (scope.userId) {
+    clauses.push('user_id = ?')
+    params.push(scope.userId)
+  }
+
+  if (scope.sessionId) {
+    clauses.push('session_id = ?')
+    params.push(scope.sessionId)
+  }
+
+  if (!clauses.length) {
+    return null
+  }
+
+  return {
+    clause: clauses.length === 1 ? clauses[0] : `(${clauses.join(' OR ')})`,
+    params,
+  }
+}
+
 export async function createProcessingJob(input: {
   sessionId: string
+  userId?: string | null
   sourceFilename?: string | null
   mimeType?: string | null
   fileSize?: number | null
@@ -83,6 +127,7 @@ export async function createProcessingJob(input: {
       INSERT INTO processing_jobs (
         id,
         session_id,
+        user_id,
         source_filename,
         mime_type,
         file_size,
@@ -91,11 +136,12 @@ export async function createProcessingJob(input: {
         created_at,
         updated_at
       )
-      VALUES (?, ?, ?, ?, ?, 'processing', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      VALUES (?, ?, ?, ?, ?, ?, 'processing', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `,
     [
       jobId,
       input.sessionId,
+      input.userId ?? null,
       input.sourceFilename ?? null,
       input.mimeType ?? null,
       input.fileSize ?? null,
@@ -145,17 +191,23 @@ export async function markProcessingJobFailed(jobId: string | null, errorMessage
   )
 }
 
-export async function getProcessingHistory(sessionId: string, limit = 8) {
+export async function getProcessingHistory(scope: HistoryScope, limit = 8) {
   if (!isD1Configured()) {
+    return [] as ProcessingHistoryItem[]
+  }
+
+  const builtScope = buildScope(scope)
+  if (!builtScope) {
     return [] as ProcessingHistoryItem[]
   }
 
   await ensureProcessingHistorySchema()
 
-  const safeLimit = Math.min(Math.max(limit, 1), 20)
+  const safeLimit = Math.min(Math.max(limit, 1), 24)
   const result = await d1Query<{
     id: string
     session_id: string
+    user_id: string | null
     source_filename: string | null
     mime_type: string | null
     file_size: number | string | null
@@ -170,6 +222,7 @@ export async function getProcessingHistory(sessionId: string, limit = 8) {
       SELECT
         id,
         session_id,
+        user_id,
         source_filename,
         mime_type,
         file_size,
@@ -180,16 +233,17 @@ export async function getProcessingHistory(sessionId: string, limit = 8) {
         created_at,
         updated_at
       FROM processing_jobs
-      WHERE session_id = ?
+      WHERE ${builtScope.clause}
       ORDER BY datetime(created_at) DESC
       LIMIT ${safeLimit}
     `,
-    [sessionId],
+    builtScope.params,
   )
 
   return (result.results ?? []).map((row) => ({
     id: row.id,
     sessionId: row.session_id,
+    userId: row.user_id,
     sourceFilename: row.source_filename,
     mimeType: row.mime_type,
     fileSize: row.file_size === null ? null : toNumber(row.file_size),
@@ -202,8 +256,18 @@ export async function getProcessingHistory(sessionId: string, limit = 8) {
   }))
 }
 
-export async function getProcessingSummary(sessionId: string) {
+export async function getProcessingSummary(scope: HistoryScope) {
   if (!isD1Configured()) {
+    return {
+      totalJobs: 0,
+      completedJobs: 0,
+      failedJobs: 0,
+      creditsUsed: 0,
+    } satisfies ProcessingSummary
+  }
+
+  const builtScope = buildScope(scope)
+  if (!builtScope) {
     return {
       totalJobs: 0,
       completedJobs: 0,
@@ -227,9 +291,9 @@ export async function getProcessingSummary(sessionId: string) {
         SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_jobs,
         SUM(CASE WHEN status = 'completed' THEN credits_charged ELSE 0 END) AS credits_used
       FROM processing_jobs
-      WHERE session_id = ?
+      WHERE ${builtScope.clause}
     `,
-    [sessionId],
+    builtScope.params,
   )
 
   const summary = result.results?.[0]

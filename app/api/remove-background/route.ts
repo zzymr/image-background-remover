@@ -4,11 +4,12 @@ import {
   markProcessingJobCompleted,
   markProcessingJobFailed,
 } from '@/lib/processing-history'
+import { getCurrentUser, isAuthConfigured } from '@/lib/auth'
 
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
-const REMOVE_BG_API_KEY = process.env.REMOVE_BG_API_KEY
+const REMOVE_BG_API_KEY = process.env.REMOVE_BG_API_KEY || process.env.REMOVEBG_API_KEY
 const REMOVE_BG_API_URL = process.env.REMOVE_BG_API_URL || 'https://api.remove.bg/v1.0/removebg'
 
 function jsonError(message: string, status: number) {
@@ -36,6 +37,13 @@ export async function POST(request: NextRequest) {
       return jsonError('Remove.bg API key not configured.', 500)
     }
 
+    const authEnabled = isAuthConfigured()
+    const user = authEnabled ? await getCurrentUser(request) : null
+
+    if (authEnabled && !user) {
+      return jsonError('Please sign in with Google before removing a background.', 401)
+    }
+
     const formData = await request.formData()
     const image = formData.get('image') as File | null
     const sessionId =
@@ -45,6 +53,10 @@ export async function POST(request: NextRequest) {
 
     if (!image) {
       return jsonError('No image provided.', 400)
+    }
+
+    if (!sessionId) {
+      return jsonError('Missing client session.', 400)
     }
 
     const maxSize = 10 * 1024 * 1024
@@ -57,17 +69,16 @@ export async function POST(request: NextRequest) {
       return jsonError(`Unsupported file type: ${image.type}`, 400)
     }
 
-    if (sessionId) {
-      try {
-        jobId = await createProcessingJob({
-          sessionId,
-          sourceFilename: image.name,
-          mimeType: image.type,
-          fileSize: image.size,
-        })
-      } catch (historyError) {
-        console.error('Failed to create D1 processing record:', historyError)
-      }
+    try {
+      jobId = await createProcessingJob({
+        sessionId,
+        userId: user?.id,
+        sourceFilename: image.name,
+        mimeType: image.type,
+        fileSize: image.size,
+      })
+    } catch (historyError) {
+      console.error('Failed to create processing record:', historyError)
     }
 
     const imageBuffer = await image.arrayBuffer()

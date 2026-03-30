@@ -15,9 +15,9 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: 'Ethereal Cutout — Premium AI Background Removal',
+  title: 'EtherealAI — Premium AI Background Removal',
   description:
-    'A premium editorial experience for fast, high-quality background removal, clear pricing, and a polished product story.',
+    'A calmer studio experience for AI background removal, Google sign-in, processing history, and customer-ready product pages.',
 }
 
 export default function RootLayout({
@@ -27,11 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className={`${inter.variable} ${manrope.variable} bg-[var(--surface)] text-[var(--ink)] antialiased`}>
-        <div className="relative min-h-screen overflow-x-hidden">
-          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(110,159,255,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(137,60,146,0.12),transparent_24%),linear-gradient(180deg,#f5f7f9_0%,#eef1f3_55%,#f5f7f9_100%)]" />
+      <body className={`${inter.variable} ${manrope.variable} antialiased`}>
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(110,159,255,0.16),transparent_26%),linear-gradient(180deg,#f7f8fb_0%,#f6f7fb_100%)]">
           <SiteHeader />
-          <main className="pt-28">{children}</main>
+          <main>{children}</main>
           <SiteFooter />
         </div>
       </body>
